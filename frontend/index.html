@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>梦境碎片收集系统</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div v-if="!isLoggedIn" class="login-container">
+      <div class="login-box">
+        <h1 class="title">🌙 梦境碎片</h1>
+        <p class="subtitle">收集你的每一个灵感瞬间</p>
+        <div class="form-group">
+          <label>用户名</label>
+          <input v-model="loginForm.username" type="text" placeholder="请输入用户名" @keyup.enter="handleLogin">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input v-model="loginForm.password" type="password" placeholder="请输入密码" @keyup.enter="handleLogin">
+        </div>
+        <button v-if="!loginLoading" class="btn-primary" @click="handleLogin">登 录</button>
+        <button v-else class="btn-primary" disabled>登录中...</button>
+        <p v-if="loginError" class="error-text">{{ loginError }}</p>
+        <p class="hint">默认账号: dreamer / 123456</p>
+      </div>
+    </div>
+
+    <div v-else class="main-container">
+      <header class="header">
+        <div class="header-left">
+          <span class="logo">🌙 梦境碎片</span>
+        </div>
+        <div class="header-right">
+          <button class="btn-icon" @click="toggleWhiteNoise" :class="{ active: isPlaying }">
+            {{ isPlaying ? '🔊 白噪音开' : '🔇 白噪音关' }}
+          </button>
+          <span class="username">欢迎, {{ user.username }}</span>
+          <button class="btn-outline" @click="handleLogout">退出</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="stats-header">
+          <h2 class="section-title">📊 月度统计</h2>
+          <div class="stats-selector">
+            <select v-model="selectedYear" @change="onMonthChange">
+              <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}年</option>
+            </select>
+            <select v-model="selectedMonth" @change="onMonthChange">
+              <option v-for="m in 12" :key="m" :value="m">{{ m }}月</option>
+            </select>
+          </div>
+        </div>
+        <div class="stats-section">
+          <div class="stat-card">
+            <div class="stat-number">{{ monthlyStats.count }}</div>
+            <div class="stat-label">{{ selectedMonth }}月梦境数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ monthlyStats.avgLucidity }}</div>
+            <div class="stat-label">平均清醒度</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ dreams.length }}</div>
+            <div class="stat-label">总记录数</div>
+          </div>
+        </div>
+
+        <div class="two-columns">
+          <div class="card">
+            <h2>✨ 随机灵感</h2>
+            <div v-if="randomDream" class="random-dream">
+              <div class="dream-date">{{ randomDream.date }}</div>
+              <div class="dream-content">"{{ randomDream.content }}"</div>
+              <div class="dream-lucidity">
+                清醒度: <span v-for="n in 5" :key="n" class="star">{{ n <= randomDream.lucidity ? '★' : '☆' }}</span>
+              </div>
+            </div>
+            <div v-else class="empty-dream">
+              点击按钮抽取一条旧灵感
+            </div>
+            <button class="btn-primary btn-large" @click="fetchRandomDream">
+              🎲 随机抽取
+            </button>
+          </div>
+
+          <div class="card">
+            <h2>📝 记录新梦境</h2>
+            <div class="form-group">
+              <label>日期</label>
+              <input v-model="newDream.date" type="date">
+            </div>
+            <div class="form-group">
+              <label>清醒度</label>
+              <div class="star-rating">
+                <span
+                  v-for="n in 5"
+                  :key="n"
+                  class="star big"
+                  :class="{ active: n <= newDream.lucidity }"
+                  @click="newDream.lucidity = n"
+                >★</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>梦境内容</label>
+              <textarea v-model="newDream.content" rows="5" placeholder="描述你的梦境..."></textarea>
+            </div>
+            <button class="btn-primary btn-large" @click="addDream">保存梦境</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>📚 梦境列表</h2>
+          <div v-if="dreams.length === 0" class="empty-dream">还没有记录梦境</div>
+          <div v-else class="dream-list">
+            <div v-for="dream in dreams" :key="dream.id" class="dream-item">
+              <div class="dream-header">
+                <span class="dream-date">{{ dream.date }}</span>
+                <span class="dream-lucidity">
+                  <span v-for="n in 5" :key="n" class="star">{{ n <= dream.lucidity ? '★' : '☆' }}</span>
+                </span>
+              </div>
+              <div class="dream-text">{{ dream.content }}</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

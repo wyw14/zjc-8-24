@@ -1,0 +1,63 @@
+﻿# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+coverage/
+**/coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Caches
+.cache/
+**/.cache/
+.parcel-cache/
+**/.parcel-cache/
+.turbo/
+**/.turbo/
+.next/
+**/.next/
+.nuxt/
+**/.nuxt/
+.vite/
+**/.vite/
+.eslintcache
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Large/archive/media artifacts
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.iso
