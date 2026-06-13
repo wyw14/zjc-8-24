@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = 3001;
+const PORT = 3124;
 const JWT_SECRET = 'dream-secret-key-2024';
 
 const DATA_DIR = path.join(__dirname, 'data');

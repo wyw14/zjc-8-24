@@ -1,6 +1,6 @@
 const { createApp, ref, onMounted, computed } = Vue;
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:3124/api';
 
 createApp({
   setup() {
