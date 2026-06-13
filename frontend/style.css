@@ -418,3 +418,230 @@ body {
     display: none;
   }
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-box {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-title {
+  font-size: 22px;
+  margin-bottom: 24px;
+  background: linear-gradient(90deg, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-loading,
+.modal-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.modal-error {
+  color: #f87171;
+}
+
+.preview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.preview-stat {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 20px 15px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preview-stat.valid {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.preview-stat.invalid {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.05);
+}
+
+.preview-stat.duplicate {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.preview-stat-num {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.preview-stat.valid .preview-stat-num {
+  color: #34d399;
+}
+
+.preview-stat.invalid .preview-stat-num {
+  color: #f87171;
+}
+
+.preview-stat.duplicate .preview-stat-num {
+  color: #fbbf24;
+}
+
+.preview-stat-label {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.preview-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+}
+
+.preview-tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.preview-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.preview-tab.active {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+.preview-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 20px;
+  min-height: 100px;
+  max-height: 300px;
+}
+
+.preview-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.preview-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preview-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.preview-item-date {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.preview-item-lucidity {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.preview-item-content {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.preview-item-reason {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(248, 113, 113, 0.2);
+  color: #f87171;
+  font-size: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-actions .btn-primary,
+.modal-actions .btn-outline {
+  flex: 1;
+  margin: 0;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .preview-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .preview-stat {
+    padding: 15px 10px;
+  }
+
+  .preview-stat-num {
+    font-size: 22px;
+  }
+
+  .modal-box {
+    padding: 20px;
+  }
+}

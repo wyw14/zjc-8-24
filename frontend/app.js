@@ -39,6 +39,46 @@ createApp({
     let noiseNode = null;
     let gainNode = null;
 
+    const fileInput = ref(null);
+    const previewModal = ref({
+      visible: false,
+      loading: false,
+      importing: false,
+      error: '',
+      total: 0,
+      validCount: 0,
+      invalidCount: 0,
+      duplicateCount: 0,
+      validDreams: [],
+      invalidDreams: [],
+      duplicateDreams: [],
+      activeTab: 'valid'
+    });
+
+    const previewTabs = computed(() => [
+      { key: 'valid', label: '待导入', count: previewModal.value.validCount },
+      { key: 'invalid', label: '无效', count: previewModal.value.invalidCount },
+      { key: 'duplicate', label: '重复', count: previewModal.value.duplicateCount }
+    ]);
+
+    const currentPreviewList = computed(() => {
+      switch (previewModal.value.activeTab) {
+        case 'valid': return previewModal.value.validDreams;
+        case 'invalid': return previewModal.value.invalidDreams;
+        case 'duplicate': return previewModal.value.duplicateDreams;
+        default: return [];
+      }
+    });
+
+    function getInvalidReason(item) {
+      if (typeof item !== 'object' || item === null) return '数据格式错误';
+      if (typeof item.content !== 'string' || !item.content.trim()) return '缺少梦境内容';
+      const lucidity = parseInt(item.lucidity);
+      if (isNaN(lucidity) || lucidity < 1 || lucidity > 5) return '清醒度需为1-5的整数';
+      if (typeof item.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) return '日期格式错误（需为YYYY-MM-DD）';
+      return '未知错误';
+    }
+
     function getToken() {
       return localStorage.getItem('dream_token');
     }
@@ -193,6 +233,86 @@ createApp({
       fetchMonthlyStats();
     }
 
+    function triggerFileInput() {
+      if (fileInput.value) {
+        fileInput.value.value = '';
+        fileInput.value.click();
+      }
+    }
+
+    function onFileChange(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      previewDreams(file);
+    }
+
+    async function previewDreams(file) {
+      previewModal.value.visible = true;
+      previewModal.value.loading = true;
+      previewModal.value.error = '';
+      previewModal.value.activeTab = 'valid';
+      previewModal.value.validDreams = [];
+      previewModal.value.invalidDreams = [];
+      previewModal.value.duplicateDreams = [];
+
+      try {
+        const text = await file.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch (e) {
+          throw new Error('JSON解析失败，请检查文件格式');
+        }
+
+        let dreamsArray = Array.isArray(parsed) ? parsed : parsed.dreams;
+        if (!Array.isArray(dreamsArray)) {
+          throw new Error('JSON格式错误，根节点需为数组格式');
+        }
+
+        const data = await apiRequest('/dreams/preview', {
+          method: 'POST',
+          body: JSON.stringify({ dreams: dreamsArray })
+        });
+
+        previewModal.value.total = data.total;
+        previewModal.value.validCount = data.validCount;
+        previewModal.value.invalidCount = data.invalidCount;
+        previewModal.value.duplicateCount = data.duplicateCount;
+        previewModal.value.validDreams = data.validDreams;
+        previewModal.value.invalidDreams = data.invalidDreams;
+        previewModal.value.duplicateDreams = data.duplicateDreams;
+      } catch (e) {
+        previewModal.value.error = e.message;
+      } finally {
+        previewModal.value.loading = false;
+      }
+    }
+
+    function closePreviewModal() {
+      previewModal.value.visible = false;
+      previewModal.value.error = '';
+      if (fileInput.value) {
+        fileInput.value.value = '';
+      }
+    }
+
+    async function confirmImport() {
+      previewModal.value.importing = true;
+      try {
+        const result = await apiRequest('/dreams/confirm', {
+          method: 'POST',
+          body: JSON.stringify({ validDreams: previewModal.value.validDreams })
+        });
+        alert(`成功导入 ${result.imported} 条梦境`);
+        closePreviewModal();
+        loadData();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        previewModal.value.importing = false;
+      }
+    }
+
     function createWhiteNoise() {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioContext = new AudioContext();
@@ -276,7 +396,16 @@ createApp({
       selectedYear,
       selectedMonth,
       yearOptions,
-      onMonthChange
+      onMonthChange,
+      fileInput,
+      triggerFileInput,
+      onFileChange,
+      previewModal,
+      previewTabs,
+      currentPreviewList,
+      getInvalidReason,
+      closePreviewModal,
+      confirmImport
     };
   }
 }).mount('#app');

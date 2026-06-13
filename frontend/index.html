@@ -37,6 +37,10 @@
           <button class="btn-icon" @click="toggleWhiteNoise" :class="{ active: isPlaying }">
             {{ isPlaying ? '🔊 白噪音开' : '🔇 白噪音关' }}
           </button>
+          <button class="btn-icon" @click="triggerFileInput">
+            📥 导入JSON
+          </button>
+          <input ref="fileInput" type="file" accept=".json" style="display:none" @change="onFileChange">
           <span class="username">欢迎, {{ user.username }}</span>
           <button class="btn-outline" @click="handleLogout">退出</button>
         </div>
@@ -129,6 +133,75 @@
           </div>
         </div>
       </main>
+
+      <div v-if="previewModal.visible" class="modal-overlay" @click.self="closePreviewModal">
+        <div class="modal-box">
+          <h2 class="modal-title">📥 导入预览</h2>
+          <div v-if="previewModal.loading" class="modal-loading">
+            解析中...
+          </div>
+          <div v-else-if="previewModal.error" class="modal-error">
+            {{ previewModal.error }}
+          </div>
+          <template v-else>
+            <div class="preview-stats">
+              <div class="preview-stat valid">
+                <div class="preview-stat-num">{{ previewModal.validCount }}</div>
+                <div class="preview-stat-label">待导入</div>
+              </div>
+              <div class="preview-stat invalid">
+                <div class="preview-stat-num">{{ previewModal.invalidCount }}</div>
+                <div class="preview-stat-label">无效</div>
+              </div>
+              <div class="preview-stat duplicate">
+                <div class="preview-stat-num">{{ previewModal.duplicateCount }}</div>
+                <div class="preview-stat-label">重复</div>
+              </div>
+            </div>
+            <div class="preview-tabs">
+              <button
+                v-for="tab in previewTabs"
+                :key="tab.key"
+                class="preview-tab"
+                :class="{ active: previewModal.activeTab === tab.key }"
+                @click="previewModal.activeTab = tab.key"
+              >
+                {{ tab.label }} ({{ tab.count }})
+              </button>
+            </div>
+            <div class="preview-list">
+              <div v-if="currentPreviewList.length === 0" class="preview-empty">
+                暂无数据
+              </div>
+              <div v-else class="preview-items">
+                <div v-for="(item, idx) in currentPreviewList" :key="idx" class="preview-item">
+                  <div class="preview-item-header">
+                    <span v-if="item.date" class="preview-item-date">{{ item.date }}</span>
+                    <span v-if="item.lucidity" class="preview-item-lucidity">
+                      <span v-for="n in 5" :key="n" class="star">{{ n <= item.lucidity ? '★' : '☆' }}</span>
+                    </span>
+                  </div>
+                  <div class="preview-item-content">{{ item.content || '(无内容)' }}</div>
+                  <div v-if="previewModal.activeTab === 'invalid'" class="preview-item-reason">
+                    无效原因：{{ getInvalidReason(item) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <div class="modal-actions">
+            <button class="btn-outline" @click="closePreviewModal">取消</button>
+            <button
+              v-if="!previewModal.loading && !previewModal.error && previewModal.validCount > 0"
+              class="btn-primary"
+              :disabled="previewModal.importing"
+              @click="confirmImport"
+            >
+              {{ previewModal.importing ? '导入中...' : `确认导入 (${previewModal.validCount})` }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

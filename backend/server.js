@@ -194,6 +194,94 @@ app.get('/api/stats/monthly', authenticateToken, (req, res) => {
   });
 });
 
+function isValidDream(d) {
+  if (typeof d !== 'object' || d === null) return false;
+  if (typeof d.content !== 'string' || !d.content.trim()) return false;
+  const lucidity = parseInt(d.lucidity);
+  if (isNaN(lucidity) || lucidity < 1 || lucidity > 5) return false;
+  if (typeof d.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) return false;
+  return true;
+}
+
+function isSameDream(a, b) {
+  return a.content.trim() === b.content.trim() && a.date === b.date;
+}
+
+app.post('/api/dreams/preview', authenticateToken, (req, res) => {
+  const uploadData = req.body.dreams;
+  if (!Array.isArray(uploadData)) {
+    return res.status(400).json({ error: 'JSON格式错误，需为数组格式' });
+  }
+
+  const existingDreams = readJSON(DREAMS_FILE).filter(d => d.userId === req.user.id);
+  const validDreams = [];
+  const invalidDreams = [];
+  const duplicateDreams = [];
+
+  for (const item of uploadData) {
+    if (!isValidDream(item)) {
+      invalidDreams.push(item);
+      continue;
+    }
+    const normalized = {
+      content: item.content,
+      lucidity: parseInt(item.lucidity),
+      date: item.date
+    };
+    const isDuplicate = existingDreams.some(d => isSameDream(d, normalized))
+      || validDreams.some(d => isSameDream(d, normalized));
+    if (isDuplicate) {
+      duplicateDreams.push(normalized);
+    } else {
+      validDreams.push(normalized);
+    }
+  }
+
+  res.json({
+    total: uploadData.length,
+    validCount: validDreams.length,
+    invalidCount: invalidDreams.length,
+    duplicateCount: duplicateDreams.length,
+    validDreams,
+    invalidDreams,
+    duplicateDreams
+  });
+});
+
+app.post('/api/dreams/confirm', authenticateToken, (req, res) => {
+  const validDreams = req.body.validDreams;
+  if (!Array.isArray(validDreams)) {
+    return res.status(400).json({ error: '数据格式错误' });
+  }
+
+  const allDreams = readJSON(DREAMS_FILE);
+  let nextId = allDreams.length > 0 ? Math.max(...allDreams.map(d => d.id)) + 1 : 1;
+
+  const confirmed = [];
+  const existingDreams = allDreams.filter(d => d.userId === req.user.id);
+
+  for (const d of validDreams) {
+    if (!isValidDream(d)) continue;
+    const normalized = {
+      content: d.content,
+      lucidity: parseInt(d.lucidity),
+      date: d.date
+    };
+    const isDuplicate = existingDreams.some(ed => isSameDream(ed, normalized));
+    if (isDuplicate) continue;
+    const newDream = {
+      id: nextId++,
+      userId: req.user.id,
+      ...normalized
+    };
+    allDreams.push(newDream);
+    confirmed.push(newDream);
+  }
+
+  writeJSON(DREAMS_FILE, allDreams);
+  res.json({ imported: confirmed.length, dreams: confirmed });
+});
+
 app.listen(PORT, () => {
   console.log(`梦境收集系统后端运行在 http://localhost:${PORT}`);
   console.log('默认账号: dreamer / 123456');
