@@ -71,6 +71,19 @@ createApp({
     });
 
     function getInvalidReason(item) {
+      const reason = item && item.__reason;
+      const reasonMap = {
+        'data': '数据格式错误',
+        'content': '缺少梦境内容或内容为空',
+        'lucidity_type': '清醒度类型错误（需为数字或数字字符串）',
+        'lucidity_format': '清醒度格式错误（需为纯整数）',
+        'lucidity_decimal': '清醒度不能为小数，需为整数',
+        'lucidity_range': '清醒度需为1-5之间的整数',
+        'date_format': '日期格式错误（需为YYYY-MM-DD）',
+        'date_invalid': '日期不存在（如2月30日、13月等）',
+        'date_range': '年份超出合理范围（1900-9999）'
+      };
+      if (reason && reasonMap[reason]) return reasonMap[reason];
       if (typeof item !== 'object' || item === null) return '数据格式错误';
       if (typeof item.content !== 'string' || !item.content.trim()) return '缺少梦境内容';
       const lucidity = parseInt(item.lucidity);

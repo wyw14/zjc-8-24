@@ -195,12 +195,36 @@ app.get('/api/stats/monthly', authenticateToken, (req, res) => {
 });
 
 function isValidDream(d) {
-  if (typeof d !== 'object' || d === null) return false;
-  if (typeof d.content !== 'string' || !d.content.trim()) return false;
+  if (typeof d !== 'object' || d === null) return { valid: false, reason: 'data' };
+  if (typeof d.content !== 'string' || !d.content.trim()) return { valid: false, reason: 'content' };
+  if (typeof d.lucidity !== 'number' && typeof d.lucidity !== 'string') {
+    return { valid: false, reason: 'lucidity_type' };
+  }
+  if (typeof d.lucidity === 'string' && !/^\d+$/.test(d.lucidity.trim())) {
+    return { valid: false, reason: 'lucidity_format' };
+  }
+  if (typeof d.lucidity === 'number' && !Number.isInteger(d.lucidity)) {
+    return { valid: false, reason: 'lucidity_decimal' };
+  }
   const lucidity = parseInt(d.lucidity);
-  if (isNaN(lucidity) || lucidity < 1 || lucidity > 5) return false;
-  if (typeof d.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) return false;
-  return true;
+  if (isNaN(lucidity) || lucidity < 1 || lucidity > 5) return { valid: false, reason: 'lucidity_range' };
+  if (typeof d.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) {
+    return { valid: false, reason: 'date_format' };
+  }
+  const [y, m, day] = d.date.split('-').map(Number);
+  const dt = new Date(y, m - 1, day);
+  if (
+    dt.getFullYear() !== y ||
+    dt.getMonth() !== m - 1 ||
+    dt.getDate() !== day ||
+    isNaN(dt.getTime())
+  ) {
+    return { valid: false, reason: 'date_invalid' };
+  }
+  if (y < 1900 || y > 9999) {
+    return { valid: false, reason: 'date_range' };
+  }
+  return { valid: true, lucidity };
 }
 
 function isSameDream(a, b) {
@@ -219,13 +243,14 @@ app.post('/api/dreams/preview', authenticateToken, (req, res) => {
   const duplicateDreams = [];
 
   for (const item of uploadData) {
-    if (!isValidDream(item)) {
-      invalidDreams.push(item);
+    const check = isValidDream(item);
+    if (!check.valid) {
+      invalidDreams.push({ ...item, __reason: check.reason });
       continue;
     }
     const normalized = {
       content: item.content,
-      lucidity: parseInt(item.lucidity),
+      lucidity: check.lucidity,
       date: item.date
     };
     const isDuplicate = existingDreams.some(d => isSameDream(d, normalized))
@@ -261,13 +286,15 @@ app.post('/api/dreams/confirm', authenticateToken, (req, res) => {
   const existingDreams = allDreams.filter(d => d.userId === req.user.id);
 
   for (const d of validDreams) {
-    if (!isValidDream(d)) continue;
+    const check = isValidDream(d);
+    if (!check.valid) continue;
     const normalized = {
       content: d.content,
-      lucidity: parseInt(d.lucidity),
+      lucidity: check.lucidity,
       date: d.date
     };
-    const isDuplicate = existingDreams.some(ed => isSameDream(ed, normalized));
+    const isDuplicate = existingDreams.some(ed => isSameDream(ed, normalized))
+      || confirmed.some(cd => isSameDream(cd, normalized));
     if (isDuplicate) continue;
     const newDream = {
       id: nextId++,
